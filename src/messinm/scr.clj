@@ -17,7 +17,7 @@
   (:use [clojure.tools.nrepl.server :only (start-server stop-server)])
   (:import 
 	  (javax.swing JFrame JLabel JTextArea JTextPane JTextField JButton JScrollPane SwingConstants
-                      JSplitPane JPanel BoxLayout UIManager KeyStroke) 
+                      JSplitPane JPanel BoxLayout UIManager KeyStroke SwingUtilities) 
 	  (javax.swing.tree TreeModel) 
         (javax.swing.event CaretEvent CaretListener)
         (javax.swing.text DefaultStyledDocument StyleConstants StyleConstants$CharacterConstants SimpleAttributeSet)
@@ -147,7 +147,7 @@ implement paren, bracket and brace highlighting"
 and :ns (namespace after eval)"
 [responses]
 {:out (->> responses
-                (map #(or (:value %) (:err %)))
+                (map #(or (:out %) (:value %) (:err %)))
                   (filter #(not (nil? %))))
  :ns (reduce #(or (:ns %2) %1) nil responses)})
  
@@ -166,7 +166,7 @@ and :ns (namespace after eval)"
     	                      {:out (reduce (fn[t r] (str t r "\n")) "" (:out r-v)) 
     	                               :ns (:ns r-v)}))
     	      init     (eval-fn "*ns*" "user")
-    	  		frame    (main-frame eval-fn init)]
+    	  		frame    (SwingUtilities/invokeLater #(main-frame eval-fn init))]
     	  	(loop [go? true]
     	  	  (Thread/sleep 200)
     	  	  (if go? (recur @runrepl)))))))
