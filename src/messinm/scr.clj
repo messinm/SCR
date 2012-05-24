@@ -116,9 +116,10 @@ implement paren, bracket and brace highlighting"
     (.addActionListener eval-button 
            (proxy [ActionListener] [] 
                 (actionPerformed [evt]
-                    (let [e-m (eval-fn (or (.getSelectedText entry-text) (.getText entry-text)))]
+                    (let [e-m (eval-fn (or (.getSelectedText entry-text) (.getText entry-text)) (.getText entry-lbl))
+                          ns (:ns e-m)]
                          (.append result-text (:out e-m))
-                         (.setText entry-lbl (str (:ns e-m)))))))
+                         (when ns (.setText entry-lbl (str ns)))))))
     (.addActionListener clr-button 
            (proxy [ActionListener] [] 
                 (actionPerformed [evt]
@@ -151,25 +152,25 @@ and :ns (namespace after eval)"
  :ns (reduce #(or (:ns %2) %1) nil responses)})
  
 (defn -main
-[& args] 
+[& args]
 (with-open [srvr (start-server :port 0)]
   (let [p    (.getLocalPort (:ss @srvr))
         _    (println "port " p)]
    (with-open [conn (repl/connect :port p)]
    	(let [client 	(repl/client conn 1000)
-    	      eval-fn 	(fn[txt] 
-    	                  (let [r-m (repl/message client {:op :eval :code txt})
-    	                                ;_    (println r-m)
+    	      eval-fn 	(fn[txt ns] 
+    	                  (let [r-m (repl/message client {:op :eval :code txt :ns (str ns)})
+    	                               ; _    (println r-m)
     	                          	     r-v  (resp-vals-errs r-m)]
-    	                                ;_    (println r-v)]
+    	                               ; _    (println r-v)]
     	                      {:out (reduce (fn[t r] (str t r "\n")) "" (:out r-v)) 
     	                               :ns (:ns r-v)}))
-    	      init     (eval-fn "*ns*")
+    	      init     (eval-fn "*ns*" "user")
     	  		frame    (main-frame eval-fn init)]
     	  	(loop [go? true]
     	  	  (Thread/sleep 200)
-    	  	  (if go? (recur @runrepl)))))
-    	  	  (swap! runrepl (fn[x] true)))))
+    	  	  (if go? (recur @runrepl)))))))
+    	  	  (swap! runrepl (fn[x] true)))
     	  	  
 
 
